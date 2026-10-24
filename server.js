@@ -12,6 +12,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('.'));
 
 // 1. READ: Ambil semua daftar tugas
 app.get('/api/tasks', async (req, res) => {

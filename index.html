@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display & Modifikasi File Tugas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
+
+  <div class="container mx-auto px-4 py-8 max-w-5xl">
+    <!-- Header -->
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">Repository Tugas Mahasiswa</h1>
+      <p class="text-gray-600">Platform untuk pengumpulan tugas Dimas syahrodi hikmal syakir</p>
+    </header>
+
+    <!-- Form Upload & Edit Tugas -->
+    <section class="bg-white p-6 rounded-lg shadow-md mb-10">
+      <h2 id="form-title" class="text-xl font-semibold mb-4 text-gray-700">Unggah Tugas Baru</h2>
+      <form id="task-form" class="space-y-4">
+        <input type="hidden" id="task-id">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Nama File</label>
+            <input type="text" id="title" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: Laporan Modul 1" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Mata Kuliah</label>
+            <input type="text" id="course" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: Pemrograman Web" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Deskripsi Tugas</label>
+          <textarea id="description" rows="3" class="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Penjelasan singkat mengenai tugas..."></textarea>
+        </div>
+
+        <div id="file-input-container">
+          <label class="block text-sm font-medium mb-1">File Tugas (PDF, ZIP, Docx, Image, dll)</label>
+          <input type="file" id="file" class="w-full border rounded-lg p-2 bg-gray-50">
+        </div>
+
+        <div class="flex gap-2">
+          <button type="submit" id="submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg transition">
+            Unggah Tugas
+          </button>
+          <button type="button" id="cancel-btn" class="hidden bg-gray-400 hover:bg-gray-500 text-white font-medium px-5 py-2.5 rounded-lg transition">
+            Batal Edit
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Display List Tugas -->
+    <section>
+      <h2 class="text-2xl font-bold mb-4 text-gray-700">Daftar File Tugas</h2>
+      <div id="task-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Card Tugas akan di-render di sini via JavaScript -->
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
