@@ -14,6 +14,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
+const path = require('path');
+
+app.use(express.static('.'));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // 1. READ: Ambil semua daftar tugas
 app.get('/api/tasks', async (req, res) => {
   const { data, error } = await supabase
