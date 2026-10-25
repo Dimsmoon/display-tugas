@@ -30,26 +30,39 @@ async function fetchTasks() {
     }
 
     tasksData.forEach((task) => {
-      const card = document.createElement('div');
-      card.className = 'bg-white p-5 rounded-lg shadow border flex flex-col justify-between';
-      card.innerHTML = `
-        <div>
-          <span class="text-xs font-semibold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded">${escapeHtml(task.course)}</span>
-          <h3 class="text-lg font-bold text-gray-800 mt-2">${escapeHtml(task.title)}</h3>
-          <p class="text-gray-600 text-sm mt-1">${escapeHtml(task.description || 'Tidak ada deskripsi.')}</p>
-        </div>
-        <div class="mt-4 pt-3 border-t flex items-center justify-between">
-          <a href="${task.file_url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 font-medium text-sm hover:underline flex items-center gap-1">
-            📥 Unduh File
-          </a>
-          <div class="space-x-2">
-            <button onclick="handleEdit(${task.id})" class="text-amber-600 text-sm hover:underline font-medium">Edit</button>
-            <button onclick="handleDelete(${task.id})" class="text-red-600 text-sm hover:underline font-medium">Hapus</button>
-          </div>
-        </div>
-      `;
-      taskList.appendChild(card);
-    });
+          const card = document.createElement('div');
+          card.className = 'group bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between';
+          card.innerHTML = `
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-3">
+                <span class="inline-block text-[11px] font-bold tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100/80 px-2.5 py-1 rounded-lg uppercase">
+                  ${escapeHtml(task.course)}
+                </span>
+                <span class="text-[11px] text-slate-400">
+                  ${new Date(task.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                </span>
+              </div>
+              <h3 class="text-base font-bold text-slate-800 group-hover:text-indigo-600 transition line-clamp-1">
+                ${escapeHtml(task.title)}
+              </h3>
+              <p class="text-slate-500 text-xs mt-2 line-clamp-2 leading-relaxed">
+                ${escapeHtml(task.description || 'Tidak ada deskripsi tambahan.')}
+              </p>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <a href="${task.file_url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50/50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Unduh Berkas
+              </a>
+              <div class="flex items-center gap-3">
+                <button onclick="handleEdit(${task.id})" class="text-slate-400 hover:text-amber-600 text-xs font-medium transition">Edit</button>
+                <button onclick="handleDelete(${task.id})" class="text-slate-400 hover:text-rose-600 text-xs font-medium transition">Hapus</button>
+              </div>
+            </div>
+          `;
+          taskList.appendChild(card);
+        });
   } catch (err) {
     console.error('Error fetching tasks:', err);
     taskList.innerHTML = `<p class="text-red-500 col-span-2 text-center py-4">Gagal memuat data tugas.</p>`;
@@ -139,17 +152,46 @@ window.handleEdit = (id) => {
 };
 
 // 4. Fungsi Hapus
-window.handleDelete = async (id) => {
-  if (confirm('Apakah Anda yakin ingin menghapus tugas ini beserta filenya?')) {
-    try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Gagal menghapus tugas');
-      await fetchTasks();
-    } catch (err) {
-      alert(err.message);
-    }
-  }
+// Elemen UI Modal Hapus
+const deleteModal = document.getElementById('delete-modal');
+const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+let targetDeleteId = null;
+
+// Override fungsi handleDelete bawaan
+window.handleDelete = (id) => {
+  targetDeleteId = id;
+  // Tampilkan Modal dengan animasi lembut
+  deleteModal.classList.remove('opacity-0', 'pointer-events-none');
 };
+
+// Tombol Batal pada Modal
+cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+function closeDeleteModal() {
+  targetDeleteId = null;
+  deleteModal.classList.add('opacity-0', 'pointer-events-none');
+}
+
+// Eksekusi Hapus saat tombol "Ya, Hapus" diklik
+confirmDeleteBtn.addEventListener('click', async () => {
+  if (!targetDeleteId) return;
+
+  confirmDeleteBtn.disabled = true;
+  confirmDeleteBtn.textContent = 'Menghapus...';
+
+  try {
+    const res = await fetch(`${API_URL}/${targetDeleteId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Gagal menghapus tugas');
+    closeDeleteModal();
+    await fetchTasks();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    confirmDeleteBtn.disabled = false;
+    confirmDeleteBtn.textContent = 'Ya, Hapus';
+  }
+});
 
 // Reset Form
 cancelBtn.addEventListener('click', resetForm);
@@ -165,3 +207,41 @@ function resetForm() {
 
 // Muat data saat halaman pertama dibuka
 fetchTasks();
+
+// Elemen UI Dropzone File
+const fileNameText = document.getElementById('file-name-text');
+const fileSubText = document.getElementById('file-sub-text');
+const dropzoneBox = document.getElementById('dropzone-box');
+
+// Deteksi saat pengguna memilih file
+fileInput.addEventListener('change', (e) => {
+  const selectedFile = e.target.files[0];
+
+  if (selectedFile) {
+    // Tampilkan nama file dan ubah warna border dropzone
+    fileNameText.textContent = `📄 ${selectedFile.name}`;
+    fileNameText.classList.add('text-indigo-600', 'font-bold');
+    fileSubText.textContent = `Ukuran: ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`;
+    
+    dropzoneBox.classList.remove('border-slate-200', 'bg-slate-50/50');
+    dropzoneBox.classList.add('border-indigo-400', 'bg-indigo-50/40');
+  } else {
+    resetDropzoneUI();
+  }
+});
+
+// Update fungsi resetForm agar tampilan dropzone kembali semula setelah upload/batal
+const originalResetForm = resetForm;
+resetForm = function() {
+  originalResetForm();
+  resetDropzoneUI();
+};
+
+function resetDropzoneUI() {
+  fileNameText.textContent = 'Klik untuk memilih file dokumen';
+  fileNameText.classList.remove('text-indigo-600', 'font-bold');
+  fileSubText.textContent = 'Mendukung PDF, DOCX, ZIP, PNG, dll.';
+  
+  dropzoneBox.classList.remove('border-indigo-400', 'bg-indigo-50/40');
+  dropzoneBox.classList.add('border-slate-200', 'bg-slate-50/50');
+}
