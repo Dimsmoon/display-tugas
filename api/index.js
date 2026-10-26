@@ -5,13 +5,33 @@ const multer = require('multer');
 const supabase = require('../supabase');
 
 const app = express();
-
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
 app.use(express.json());
 
-// 1. READ
+// Middleware Validasi Admin PIN
+const verifyAdminPin = (req, res, next) => {
+  const adminPin = req.headers['x-admin-pin'];
+  if (!adminPin || adminPin !== process.env.ADMIN_PIN) {
+    return res.status(403).json({ error: 'Akses ditolak! PIN Admin tidak valid.' });
+  }
+  next();
+};
+
+// Endpoint Verifikasi Admin PIN
+app.post('/api/admin/verify', (req, res) => {
+  const { pin } = req.body;
+  const serverPin = process.env.ADMIN_PIN;
+
+  if (!pin || String(pin).trim() !== String(serverPin).trim()) {
+    return res.status(401).json({ error: 'PIN Admin salah! Akses ditolak.' });
+  }
+
+  res.json({ success: true, message: 'PIN Valid' });
+});
+
+// 1. READ (Bisa diakses Publik/Semua Orang)
 app.get('/api/tasks', async (req, res) => {
   const { data, error } = await supabase
     .from('tasks')
@@ -22,16 +42,15 @@ app.get('/api/tasks', async (req, res) => {
   res.json(data);
 });
 
-// 2. CREATE (Dengan Pengecekan File Duplikat)
-app.post('/api/tasks', upload.single('file'), async (req, res) => {
+// 2. CREATE (Wajib Admin PIN)
+app.post('/api/tasks', verifyAdminPin, upload.single('file'), async (req, res) => {
   try {
     const { title, course, description } = req.body;
     const file = req.file;
 
     if (!file) return res.status(400).json({ error: 'File wajib diunggah!' });
 
-    // --- CEK FILE DUPLIKAT ---
-    // Mencari apakah nama file asli sudah ada di kolom file_path database
+    // Cek File Duplikat
     const { data: existingTasks, error: checkError } = await supabase
       .from('tasks')
       .select('id, file_path')
@@ -44,7 +63,6 @@ app.post('/api/tasks', upload.single('file'), async (req, res) => {
         error: `File "${file.originalname}" sudah pernah diunggah sebelumnya. Gunakan nama file lain!`
       });
     }
-    // -------------------------
 
     const fileName = `${Date.now()}-${file.originalname}`;
 
@@ -79,8 +97,8 @@ app.post('/api/tasks', upload.single('file'), async (req, res) => {
   }
 });
 
-// 3. UPDATE
-app.put('/api/tasks/:id', async (req, res) => {
+// 3. UPDATE (Wajib Admin PIN)
+app.put('/api/tasks/:id', verifyAdminPin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, course, description } = req.body;
@@ -98,8 +116,8 @@ app.put('/api/tasks/:id', async (req, res) => {
   }
 });
 
-// 4. DELETE
-app.delete('/api/tasks/:id', async (req, res) => {
+// 4. DELETE (Wajib Admin PIN)
+app.delete('/api/tasks/:id', verifyAdminPin, async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Assignment Display</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Google Font: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
-    // Cek preference Dark Mode sebelum render body
     if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
     } else {
@@ -19,7 +17,6 @@
   </script>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    
   </style>
 </head>
 
@@ -32,12 +29,19 @@
     
     <!-- Header -->
     <header class="mb-10 text-center relative">
-      <!-- Dark Mode Toggle Button -->
-      <button id="theme-toggle" class="absolute right-0 top-0 p-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm transition flex items-center justify-center cursor-pointer">
-        <span id="theme-text" class="text-xs font-semibold mr-2 hidden md:inline">Mode Gelap</span>
-        <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-        <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
-      </button>
+      <div class="absolute right-0 top-0 flex items-center gap-2">
+        <!-- Admin Toggle Button -->
+        <button id="admin-login-btn" class="p-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm transition flex items-center justify-center cursor-pointer text-xs font-semibold">
+          🔑 Admin
+        </button>
+
+        <!-- Dark Mode Toggle Button -->
+        <button id="theme-toggle" class="p-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm transition flex items-center justify-center cursor-pointer">
+          <span id="theme-text" class="text-xs font-semibold mr-2 hidden md:inline">Mode Gelap</span>
+          <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+          <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+        </button>
+      </div>
 
       <span class="inline-block px-3 py-1 mb-3 text-xs font-semibold tracking-wide text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900/50 rounded-full">
         Task Repository
@@ -50,8 +54,8 @@
       </p>
     </header>
 
-    <!-- Form Upload & Edit Tugas -->
-    <section class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-xl shadow-slate-200/40 dark:shadow-none mb-12 transition-all">
+    <!-- Form Upload & Edit Tugas (Disembunyikan secara Default jika Bukan Admin) -->
+    <section id="form-section" class="hidden bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-xl shadow-slate-200/40 dark:shadow-none mb-12 transition-all">
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 id="form-title" class="text-lg font-bold text-slate-800 dark:text-slate-100">Unggah Tugas Baru</h2>
@@ -79,7 +83,6 @@
           <textarea id="description" rows="3" class="w-full bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition resize-none" placeholder="Penjelasan singkat tugas atau petunjuk pengerjaan..."></textarea>
         </div>
 
-        <!-- Custom Dropzone File -->
         <div id="file-input-container">
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">File Dokumen</label>
           <div id="dropzone-box" class="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 transition group cursor-pointer">
@@ -110,66 +113,93 @@
         <span class="text-xs text-slate-400 font-medium">Diperbarui secara otomatis</span>
       </div>
 
-      <div id="task-list" class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <!-- Card / Skeleton Loader akan di-render di sini via JavaScript -->
-      </div>
+      <div id="task-list" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
     </section>
   </div>
 
-  <!-- Modal Konfirmasi Hapus -->
-  <div id="delete-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-200">
-    <div id="modal-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center border border-slate-100 dark:border-slate-700">
-      <div class="w-12 h-12 bg-rose-50 dark:bg-rose-950/50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 border border-rose-100 dark:border-rose-900/50">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-        </svg>
+  <!-- Modal Admin PIN Login -->
+  <div id="admin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center border border-slate-100 dark:border-slate-700">
+      <div class="w-12 h-12 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mb-4 border border-indigo-100 dark:border-indigo-900/50">
+        🔑
       </div>
-      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Hapus Tugas Ini?</h3>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">Tugas dan file dokumen yang dihapus tidak dapat dikembalikan lagi.</p>
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Verifikasi Mode Admin</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">Masukkan PIN Rahasia untuk mengelola tugas.</p>
       
+      <input type="password" id="admin-pin-input" class="w-full bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-center text-sm font-bold tracking-widest text-slate-800 dark:text-slate-100 mb-5 outline-none focus:border-indigo-500" placeholder="••••••">
+
       <div class="flex items-center gap-3 w-full">
-        <button id="cancel-delete-btn" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-xs py-3 rounded-xl transition">
+        <button id="cancel-admin-btn" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-xs py-3 rounded-xl transition">
           Batal
         </button>
-        <button id="confirm-delete-btn" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-rose-500/25 transition">
-          Ya, Hapus
+        <button id="submit-admin-pin-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-indigo-500/25 transition">
+          Masuk
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Preview Document -->
-  <div id="preview-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-200">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-3xl h-[80vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-700">
-      <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/80">
-        <h3 id="preview-title" class="font-bold text-sm text-slate-800 dark:text-slate-200 truncate pr-4">Preview File</h3>
-        <button id="close-preview-btn" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-700 transition cursor-pointer">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-      <div class="flex-1 bg-slate-100 dark:bg-slate-950 p-2 relative flex items-center justify-center overflow-hidden" id="preview-body">
-        <!-- Content Preview (Iframe/Image) -->
-      </div>
-    </div>
-  </div>
-  
-<!-- Modal Warning / Alert Kustom -->
+  <!-- Modal Warning -->
   <div id="warning-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-200">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center border border-slate-100 dark:border-slate-700">
       <div class="w-12 h-12 bg-amber-50 dark:bg-amber-950/50 text-amber-500 rounded-2xl flex items-center justify-center mb-4 border border-amber-100 dark:border-amber-900/50">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-        </svg>
+        ⚠️
       </div>
       <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Pemberitahuan</h3>
       <p id="warning-message" class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">Pesan warning akan muncul di sini.</p>
-      
       <button id="close-warning-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-indigo-500/25 transition cursor-pointer">
         Mengerti
       </button>
     </div>
   </div>
 
+  <!-- Modal Konfirmasi Hapus -->
+  <div id="delete-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-200">
+    <div id="modal-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center border border-slate-100 dark:border-slate-700">
+      <div class="w-12 h-12 bg-rose-50 dark:bg-rose-950/50 text-rose-500 rounded-2xl flex items-center justify-center mb-4 border border-rose-100 dark:border-rose-900/50">
+        🗑️
+      </div>
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Hapus Tugas Ini?</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">Tugas dan file dokumen yang dihapus tidak dapat dikembalikan lagi.</p>
+      <div class="flex items-center gap-3 w-full">
+        <button id="cancel-delete-btn" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-xs py-3 rounded-xl transition">Batal</button>
+        <button id="confirm-delete-btn" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-rose-500/25 transition">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Konfirmasi Keluar Admin -->
+  <div id="logout-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center border border-slate-100 dark:border-slate-700">
+      <div class="w-12 h-12 bg-amber-50 dark:bg-amber-950/50 text-amber-500 rounded-2xl flex items-center justify-center mb-4 border border-amber-100 dark:border-amber-900/50">
+        🚪
+      </div>
+      <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1">Keluar Mode Admin?</h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">Form unggah dan opsi edit/hapus akan disembunyikan kembali.</p>
+      
+      <div class="flex items-center gap-3 w-full">
+        <button id="cancel-logout-btn" class="flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-xs py-3 rounded-xl transition cursor-pointer">
+          Batal
+        </button>
+        <button id="confirm-logout-btn" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs py-3 rounded-xl shadow-lg shadow-amber-500/25 transition cursor-pointer">
+          Ya, Keluar
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal Preview -->
+  <div id="preview-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-3xl h-[80vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-700">
+      <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/80">
+        <h3 id="preview-title" class="font-bold text-sm text-slate-800 dark:text-slate-200 truncate pr-4">Preview File</h3>
+        <button id="close-preview-btn" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-700 transition cursor-pointer">✖</button>
+      </div>
+      <div class="flex-1 bg-slate-100 dark:bg-slate-950 p-2 relative flex items-center justify-center overflow-hidden" id="preview-body"></div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
-</html> 
+</html>

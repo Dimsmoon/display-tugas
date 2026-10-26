@@ -1,6 +1,7 @@
 const API_URL = '/api/tasks';
 
 const taskForm = document.getElementById('task-form');
+const formSection = document.getElementById('form-section');
 const taskIdInput = document.getElementById('task-id');
 const titleInput = document.getElementById('title');
 const courseInput = document.getElementById('course');
@@ -12,24 +13,149 @@ const submitBtn = document.getElementById('submit-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const taskList = document.getElementById('task-list');
 
-// Dropzone & Modal Elemen
+// Dropzone & Warning Modal
 const fileNameText = document.getElementById('file-name-text');
 const fileSubText = document.getElementById('file-sub-text');
 const dropzoneBox = document.getElementById('dropzone-box');
+const warningModal = document.getElementById('warning-modal');
+const warningMessage = document.getElementById('warning-message');
+const closeWarningBtn = document.getElementById('close-warning-btn');
 
+// Delete & Preview Modal
 const deleteModal = document.getElementById('delete-modal');
 const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
 const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-
 const previewModal = document.getElementById('preview-modal');
 const previewTitle = document.getElementById('preview-title');
 const previewBody = document.getElementById('preview-body');
 const closePreviewBtn = document.getElementById('close-preview-btn');
 
+// Admin Elements
+const adminLoginBtn = document.getElementById('admin-login-btn');
+const adminModal = document.getElementById('admin-modal');
+const adminPinInput = document.getElementById('admin-pin-input');
+const cancelAdminBtn = document.getElementById('cancel-admin-btn');
+const submitAdminPinBtn = document.getElementById('submit-admin-pin-btn');
+
 let tasksData = [];
 let targetDeleteId = null;
 
-// 1. Skeleton Loader Saat Loading
+// Helper Simpan PIN Admin di Session Storage
+function getAdminPin() {
+  return sessionStorage.getItem('admin_pin') || '';
+}
+
+function isAdminLoggedIn() {
+  return !!getAdminPin();
+}
+
+function updateAdminUI() {
+  if (isAdminLoggedIn()) {
+    formSection.classList.remove('hidden');
+    adminLoginBtn.textContent = '🔓 Admin Active';
+    adminLoginBtn.classList.add('bg-indigo-50', 'text-indigo-600');
+  } else {
+    formSection.classList.add('hidden');
+    adminLoginBtn.textContent = '🔑 Admin Login';
+    adminLoginBtn.classList.remove('bg-indigo-50', 'text-indigo-600');
+  }
+}
+
+// Modal Admin Handlers
+// Elemen Modal Logout Admin
+const logoutModal = document.getElementById('logout-modal');
+const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
+const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
+
+// Listener Klik Tombol Admin Header
+adminLoginBtn.addEventListener('click', () => {
+  if (isAdminLoggedIn()) {
+    // Tampilkan Modal Konfirmasi Keluar Kustom (Ganti confirm bawaan)
+    if (logoutModal) logoutModal.classList.remove('opacity-0', 'pointer-events-none');
+  } else {
+    if (adminModal) adminModal.classList.remove('opacity-0', 'pointer-events-none');
+    if (adminPinInput) adminPinInput.focus();
+  }
+});
+
+// Listener Batal Logout
+if (cancelLogoutBtn) {
+  cancelLogoutBtn.addEventListener('click', () => {
+    if (logoutModal) logoutModal.classList.add('opacity-0', 'pointer-events-none');
+  });
+}
+
+// Listener Konfirmasi Keluar Admin
+if (confirmLogoutBtn) {
+  confirmLogoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('admin_pin');
+    if (logoutModal) logoutModal.classList.add('opacity-0', 'pointer-events-none');
+    updateAdminUI();
+    fetchTasks();
+  });
+}
+
+cancelAdminBtn.addEventListener('click', () => {
+  adminModal.classList.add('opacity-0', 'pointer-events-none');
+  adminPinInput.value = '';
+});
+
+submitAdminPinBtn.addEventListener('click', async () => {
+  const pin = adminPinInput.value.trim();
+
+  if (!pin) {
+    showWarning('Masukkan PIN Admin terlebih dahulu!');
+    return;
+  }
+
+  submitAdminPinBtn.disabled = true;
+  submitAdminPinBtn.textContent = 'Memeriksa...';
+
+  try {
+    // Verifikasi PIN ke Backend
+    const res = await fetch('/api/admin/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'PIN Admin tidak valid!');
+    }
+
+    // Jika PIN Benar: Simpan ke Session & Aktifkan Mode Admin
+    sessionStorage.setItem('admin_pin', pin);
+    adminModal.classList.add('opacity-0', 'pointer-events-none');
+    adminPinInput.value = '';
+    updateAdminUI();
+    fetchTasks();
+
+  } catch (err) {
+    // Jika PIN Salah: Munculkan Warning Modal Interaktif & Tetap di Modal Login
+    showWarning(err.message);
+  } finally {
+    submitAdminPinBtn.disabled = false;
+    submitAdminPinBtn.textContent = 'Masuk';
+  }
+});
+
+function showWarning(message) {
+  if (warningModal && warningMessage) {
+    warningMessage.textContent = message;
+    warningModal.classList.remove('opacity-0', 'pointer-events-none');
+  } else {
+    alert(message);
+  }
+}
+
+if (closeWarningBtn) {
+  closeWarningBtn.addEventListener('click', () => {
+    if (warningModal) warningModal.classList.add('opacity-0', 'pointer-events-none');
+  });
+}
+
 function renderSkeleton() {
   if (!taskList) return;
   taskList.innerHTML = Array(4).fill(0).map(() => `
@@ -51,7 +177,6 @@ function renderSkeleton() {
   `).join('');
 }
 
-// Helper Ikon File Berdasarkan Ekstensi
 function getFileIcon(url) {
   if (!url) return '';
   const ext = url.split('.').pop().split('?')[0].toLowerCase();
@@ -68,7 +193,6 @@ function getFileIcon(url) {
   return `<svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
 }
 
-// 2. Fetch Tasks
 async function fetchTasks() {
   renderSkeleton();
   try {
@@ -82,6 +206,8 @@ async function fetchTasks() {
       taskList.innerHTML = `<p class="text-slate-400 col-span-2 text-center py-8 text-sm">Belum ada tugas yang diunggah.</p>`;
       return;
     }
+
+    const showAdminControls = isAdminLoggedIn();
 
     tasksData.forEach((task) => {
       const card = document.createElement('div');
@@ -114,10 +240,12 @@ async function fetchTasks() {
               📥 Unduh
             </a>
           </div>
-          <div class="flex items-center gap-3">
-            <button onclick="handleEdit(${task.id})" class="text-slate-400 hover:text-amber-600 text-xs font-medium transition cursor-pointer">Edit</button>
-            <button onclick="handleDelete(${task.id})" class="text-slate-400 hover:text-rose-600 text-xs font-medium transition cursor-pointer">Hapus</button>
-          </div>
+          ${showAdminControls ? `
+            <div class="flex items-center gap-3">
+              <button onclick="handleEdit(${task.id})" class="text-slate-400 hover:text-amber-600 text-xs font-medium transition cursor-pointer">Edit</button>
+              <button onclick="handleDelete(${task.id})" class="text-slate-400 hover:text-rose-600 text-xs font-medium transition cursor-pointer">Hapus</button>
+            </div>
+          ` : ''}
         </div>
       `;
       taskList.appendChild(card);
@@ -138,29 +266,6 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-// 3. Submit Form
-const warningModal = document.getElementById('warning-modal');
-const warningMessage = document.getElementById('warning-message');
-const closeWarningBtn = document.getElementById('close-warning-btn');
-
-// Helper untuk menampilkan Modal Warning Kustom
-function showWarning(message) {
-  if (warningModal && warningMessage) {
-    warningMessage.textContent = message;
-    warningModal.classList.remove('opacity-0', 'pointer-events-none');
-  } else {
-    alert(message);
-  }
-}
-
-// Event Listener Tutup Modal Warning
-if (closeWarningBtn) {
-  closeWarningBtn.addEventListener('click', () => {
-    if (warningModal) warningModal.classList.add('opacity-0', 'pointer-events-none');
-  });
-}
-
-// --- SUBMIT FORM TUGAS ---
 taskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -169,11 +274,15 @@ taskForm.addEventListener('submit', async (e) => {
 
   try {
     const id = taskIdInput.value;
+    const adminPin = getAdminPin();
+
     if (id) {
-      // Mode EDIT
       const res = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-pin': adminPin
+        },
         body: JSON.stringify({
           title: titleInput.value,
           course: courseInput.value,
@@ -186,7 +295,6 @@ taskForm.addEventListener('submit', async (e) => {
         throw new Error(errorData.error || 'Gagal memperbarui metadata tugas.');
       }
     } else {
-      // Mode UPLOAD BARU
       if (!fileInput.files[0]) {
         showWarning('Pilih file tugas terlebih dahulu!');
         resetSubmitButton();
@@ -201,6 +309,9 @@ taskForm.addEventListener('submit', async (e) => {
 
       const res = await fetch(API_URL, {
         method: 'POST',
+        headers: {
+          'x-admin-pin': adminPin
+        },
         body: formData
       });
 
@@ -208,7 +319,6 @@ taskForm.addEventListener('submit', async (e) => {
       if (!res.ok) {
         if (contentType && contentType.includes('application/json')) {
           const errorData = await res.json();
-          // Menampilkan pesan error khusus (termasuk file duplikat)
           throw new Error(errorData.error || 'Gagal mengunggah file');
         } else {
           throw new Error('Ukuran file terlalu besar untuk diproses server (Maksimal 4 MB).');
@@ -226,13 +336,11 @@ taskForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Helper untuk mengembalikan state tombol submit
 function resetSubmitButton() {
   submitBtn.disabled = false;
   submitBtn.textContent = taskIdInput.value ? 'Simpan Perubahan' : 'Unggah Tugas';
 }
 
-// 4. Modal Preview Handler
 window.previewFile = (url, title) => {
   if (!previewModal || !previewTitle || !previewBody) return;
 
@@ -264,7 +372,6 @@ if (closePreviewBtn) {
   });
 }
 
-// 5. Modal Hapus Handler
 window.handleDelete = (id) => {
   targetDeleteId = id;
   if (deleteModal) deleteModal.classList.remove('opacity-0', 'pointer-events-none');
@@ -285,12 +392,22 @@ if (confirmDeleteBtn) {
     confirmDeleteBtn.textContent = 'Menghapus...';
 
     try {
-      const res = await fetch(`${API_URL}/${targetDeleteId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Gagal menghapus tugas');
+      const res = await fetch(`${API_URL}/${targetDeleteId}`, { 
+        method: 'DELETE',
+        headers: {
+          'x-admin-pin': getAdminPin()
+        }
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Gagal menghapus tugas');
+      }
+
       closeDeleteModal();
       await fetchTasks();
     } catch (err) {
-      alert(err.message);
+      showWarning(err.message);
     } finally {
       confirmDeleteBtn.disabled = false;
       confirmDeleteBtn.textContent = 'Ya, Hapus';
@@ -298,7 +415,6 @@ if (confirmDeleteBtn) {
   });
 }
 
-// Edit & Form Reset Logic
 window.handleEdit = (id) => {
   const task = tasksData.find((t) => t.id === id);
   if (!task) return;
@@ -332,12 +448,10 @@ if (fileInput) {
     const selectedFile = e.target.files[0];
 
     if (selectedFile) {
-      const MAX_SIZE = 4 * 1024 * 1024; // 4 MB dalam bytes
-      
+      const MAX_SIZE = 4 * 1024 * 1024;
       if (selectedFile.size > MAX_SIZE) {
-        // Ganti alert bawaan dengan modal warning kustom
         showWarning('Ukuran file terlalu besar! Maksimal ukuran file adalah 4 MB.');
-        fileInput.value = ''; // Reset pilihan file
+        fileInput.value = '';
         resetDropzoneUI();
         return;
       }
@@ -373,7 +487,7 @@ function resetDropzoneUI() {
   }
 }
 
-// 6. Dark Mode Toggle Button Logic
+// Dark Mode Toggle
 const themeToggleBtn = document.getElementById('theme-toggle');
 const darkIcon = document.getElementById('theme-toggle-dark-icon');
 const lightIcon = document.getElementById('theme-toggle-light-icon');
@@ -394,7 +508,6 @@ function updateThemeUI() {
 
 if (themeToggleBtn) {
   updateThemeUI();
-
   themeToggleBtn.addEventListener('click', () => {
     document.documentElement.classList.toggle('dark');
     const isDark = document.documentElement.classList.contains('dark');
@@ -403,5 +516,6 @@ if (themeToggleBtn) {
   });
 }
 
-// Load awal
+// Inisialisasi awal UI Admin & Tasks
+updateAdminUI();
 fetchTasks();
