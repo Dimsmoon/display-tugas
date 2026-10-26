@@ -139,6 +139,28 @@ function escapeHtml(text) {
 }
 
 // 3. Submit Form
+const warningModal = document.getElementById('warning-modal');
+const warningMessage = document.getElementById('warning-message');
+const closeWarningBtn = document.getElementById('close-warning-btn');
+
+// Helper untuk menampilkan Modal Warning Kustom
+function showWarning(message) {
+  if (warningModal && warningMessage) {
+    warningMessage.textContent = message;
+    warningModal.classList.remove('opacity-0', 'pointer-events-none');
+  } else {
+    alert(message);
+  }
+}
+
+// Event Listener Tutup Modal Warning
+if (closeWarningBtn) {
+  closeWarningBtn.addEventListener('click', () => {
+    if (warningModal) warningModal.classList.add('opacity-0', 'pointer-events-none');
+  });
+}
+
+// --- SUBMIT FORM TUGAS ---
 taskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -148,7 +170,8 @@ taskForm.addEventListener('submit', async (e) => {
   try {
     const id = taskIdInput.value;
     if (id) {
-      await fetch(`${API_URL}/${id}`, {
+      // Mode EDIT
+      const res = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -157,9 +180,16 @@ taskForm.addEventListener('submit', async (e) => {
           description: descriptionInput.value
         })
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Gagal memperbarui metadata tugas.');
+      }
     } else {
+      // Mode UPLOAD BARU
       if (!fileInput.files[0]) {
-        alert('Pilih file tugas terlebih dahulu!');
+        showWarning('Pilih file tugas terlebih dahulu!');
+        resetSubmitButton();
         return;
       }
 
@@ -178,6 +208,7 @@ taskForm.addEventListener('submit', async (e) => {
       if (!res.ok) {
         if (contentType && contentType.includes('application/json')) {
           const errorData = await res.json();
+          // Menampilkan pesan error khusus (termasuk file duplikat)
           throw new Error(errorData.error || 'Gagal mengunggah file');
         } else {
           throw new Error('Ukuran file terlalu besar untuk diproses server (Maksimal 4 MB).');
@@ -188,12 +219,18 @@ taskForm.addEventListener('submit', async (e) => {
     resetForm();
     await fetchTasks();
   } catch (err) {
-    alert(`Terjadi kesalahan: ${err.message}`);
+    showWarning(err.message);
     console.error(err);
   } finally {
-    submitBtn.disabled = false;
+    resetSubmitButton();
   }
 });
+
+// Helper untuk mengembalikan state tombol submit
+function resetSubmitButton() {
+  submitBtn.disabled = false;
+  submitBtn.textContent = taskIdInput.value ? 'Simpan Perubahan' : 'Unggah Tugas';
+}
 
 // 4. Modal Preview Handler
 window.previewFile = (url, title) => {
@@ -295,10 +332,12 @@ if (fileInput) {
     const selectedFile = e.target.files[0];
 
     if (selectedFile) {
-      const MAX_SIZE = 4 * 1024 * 1024;
+      const MAX_SIZE = 4 * 1024 * 1024; // 4 MB dalam bytes
+      
       if (selectedFile.size > MAX_SIZE) {
-        alert('Ukuran file terlalu besar! Maksimal ukuran file adalah 4 MB.');
-        fileInput.value = '';
+        // Ganti alert bawaan dengan modal warning kustom
+        showWarning('Ukuran file terlalu besar! Maksimal ukuran file adalah 4 MB.');
+        fileInput.value = ''; // Reset pilihan file
         resetDropzoneUI();
         return;
       }

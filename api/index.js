@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const supabase = require('../supabase'); // Note: path ke supabase.js naik 1 folder
+const supabase = require('../supabase');
 
 const app = express();
 
@@ -22,13 +22,29 @@ app.get('/api/tasks', async (req, res) => {
   res.json(data);
 });
 
-// 2. CREATE
+// 2. CREATE (Dengan Pengecekan File Duplikat)
 app.post('/api/tasks', upload.single('file'), async (req, res) => {
   try {
     const { title, course, description } = req.body;
     const file = req.file;
 
     if (!file) return res.status(400).json({ error: 'File wajib diunggah!' });
+
+    // --- CEK FILE DUPLIKAT ---
+    // Mencari apakah nama file asli sudah ada di kolom file_path database
+    const { data: existingTasks, error: checkError } = await supabase
+      .from('tasks')
+      .select('id, file_path')
+      .ilike('file_path', `%-${file.originalname}`);
+
+    if (checkError) throw checkError;
+
+    if (existingTasks && existingTasks.length > 0) {
+      return res.status(400).json({
+        error: `File "${file.originalname}" sudah pernah diunggah sebelumnya. Gunakan nama file lain!`
+      });
+    }
+    // -------------------------
 
     const fileName = `${Date.now()}-${file.originalname}`;
 
@@ -110,5 +126,4 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
-// Export app agar dibaca oleh Vercel Serverless Function
 module.exports = app;
