@@ -21,7 +21,9 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
+    "autoprefixer": "^10.6.1",
     "nodemon": "^3.1.14",
+    "postcss": "^8.5.31",
     "tailwindcss": "^4.3.3"
   }
 }
