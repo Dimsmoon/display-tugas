@@ -81,6 +81,7 @@ function escapeHtml(text) {
 }
 
 // 2. Submit Form (Tambah / Edit)
+// 2. Submit Form (Tambah / Edit)
 taskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -118,9 +119,16 @@ taskForm.addEventListener('submit', async (e) => {
         body: formData
       });
 
+      // Cek apakah response berupa JSON yang valid
+      const contentType = res.headers.get('content-type');
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Gagal mengunggah file');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Gagal mengunggah file');
+        } else {
+          // Tangani jika Vercel mengembalikan teks biasa/HTML (misal: Payload Too Large)
+          throw new Error('Ukuran file terlalu besar untuk diproses server (Maksimal 4 MB).');
+        }
       }
     }
 
@@ -218,7 +226,16 @@ fileInput.addEventListener('change', (e) => {
   const selectedFile = e.target.files[0];
 
   if (selectedFile) {
-    // Tampilkan nama file dan ubah warna border dropzone
+    // Batas 4MB (4 * 1024 * 1024 bytes)
+    const MAX_SIZE = 4 * 1024 * 1024; 
+    
+    if (selectedFile.size > MAX_SIZE) {
+      alert('Ukuran file terlalu besar! Maksimal ukuran file adalah 4 MB.');
+      fileInput.value = ''; // Reset pilihan file
+      resetDropzoneUI();
+      return;
+    }
+
     fileNameText.textContent = `📄 ${selectedFile.name}`;
     fileNameText.classList.add('text-indigo-600', 'font-bold');
     fileSubText.textContent = `Ukuran: ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`;
