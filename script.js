@@ -1,3 +1,8 @@
+// Inisialisasi Supabase Client untuk Client-Side Upload
+const SUPABASE_URL = 'https://dudfwajweyqkahnnopcr.supabase.co'; // Contoh: https://xxxx.supabase.co
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZGZ3YWp3ZXlxa2Fobm5vcGNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MzE0MzAsImV4cCI6MjEwODQwNzQzMH0.KWYRb-qbB8XE-CSXHT68Brhkch1AVoHuyMOJmHT7z_4'; // Ambil dari Project Settings -> API Supabase
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const API_URL = '/api/tasks';
 
 const taskForm = document.getElementById('task-form');
@@ -277,6 +282,7 @@ taskForm.addEventListener('submit', async (e) => {
     const adminPin = getAdminPin();
 
     if (id) {
+      // Mode EDIT (Hanya update metadata via backend Express)
       const res = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: { 
@@ -295,34 +301,53 @@ taskForm.addEventListener('submit', async (e) => {
         throw new Error(errorData.error || 'Gagal memperbarui metadata tugas.');
       }
     } else {
-      if (!fileInput.files[0]) {
+      // Mode UPLOAD BARU (Langsung ke Supabase Storage dari Client)
+      const file = fileInput.files[0];
+      if (!file) {
         showWarning('Pilih file tugas terlebih dahulu!');
         resetSubmitButton();
         return;
       }
 
-      const formData = new FormData();
-      formData.append('title', titleInput.value);
-      formData.append('course', courseInput.value);
-      formData.append('description', descriptionInput.value);
-      formData.append('file', fileInput.files[0]);
+      const fileName = `${Date.now()}-${file.name}`;
 
+      // 1. Upload file langsung ke Supabase Storage bucket 'task-files'
+      const { data: storageData, error: storageError } = await supabaseClient.storage
+        .from('task-files')
+        .upload(fileName, file);
+
+      if (storageError) {
+        throw new Error('Gagal mengunggah file ke Storage: ' + storageError.message);
+      }
+
+      // 2. Ambil Public URL file yang baru diunggah
+      const { data: urlData } = supabaseClient.storage
+        .from('task-files')
+        .getPublicUrl(fileName);
+
+      const fileUrl = urlData.publicUrl;
+
+      // 3. Simpan metadata tugas ke Database via Backend Express (disertai Admin PIN)
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'x-admin-pin': adminPin
         },
-        body: formData
+        body: JSON.stringify({
+          title: titleInput.value,
+          course: courseInput.value,
+          description: descriptionInput.value,
+          file_url: fileUrl,
+          file_path: fileName
+        })
       });
 
-      const contentType = res.headers.get('content-type');
       if (!res.ok) {
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || 'Gagal mengunggah file');
-        } else {
-          throw new Error('Ukuran file terlalu besar untuk diproses server (Maksimal 4 MB).');
-        }
+        // Jika gagal simpan ke DB, hapus kembali file yang terlanjur terupload di storage
+        await supabaseClient.storage.from('task-files').remove([fileName]);
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Gagal menyimpan data tugas ke database');
       }
     }
 

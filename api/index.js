@@ -1,11 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
 const supabase = require('../supabase');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
 app.use(express.json());
@@ -42,40 +40,30 @@ app.get('/api/tasks', async (req, res) => {
   res.json(data);
 });
 
-// 2. CREATE (Wajib Admin PIN)
-app.post('/api/tasks', verifyAdminPin, upload.single('file'), async (req, res) => {
+// 2. CREATE (Menerima metadata JSON karena file di-upload langsung dari frontend)
+app.post('/api/tasks', verifyAdminPin, async (req, res) => {
   try {
-    const { title, course, description } = req.body;
-    const file = req.file;
+    const { title, course, description, file_url, file_path } = req.body;
 
-    if (!file) return res.status(400).json({ error: 'File wajib diunggah!' });
+    if (!file_url || !file_path) {
+      return res.status(400).json({ error: 'Data file wajib disertakan!' });
+    }
 
-    // Cek File Duplikat
+    // Cek File Duplikat berdasarkan nama file asli di file_path
     const { data: existingTasks, error: checkError } = await supabase
       .from('tasks')
       .select('id, file_path')
-      .ilike('file_path', `%-${file.originalname}`);
+      .ilike('file_path', `%-${file_path.split('-').slice(1).join('-')}`);
 
     if (checkError) throw checkError;
 
     if (existingTasks && existingTasks.length > 0) {
       return res.status(400).json({
-        error: `File "${file.originalname}" sudah pernah diunggah sebelumnya. Gunakan nama file lain!`
+        error: `File dengan nama tersebut sudah pernah diunggah sebelumnya. Gunakan nama file lain!`
       });
     }
 
-    const fileName = `${Date.now()}-${file.originalname}`;
-
-    const { error: storageError } = await supabase.storage
-      .from('task-files')
-      .upload(fileName, file.buffer, { contentType: file.mimetype });
-
-    if (storageError) throw storageError;
-
-    const { data: urlData } = supabase.storage
-      .from('task-files')
-      .getPublicUrl(fileName);
-
+    // Insert ke Database Supabase
     const { data, error: dbError } = await supabase
       .from('tasks')
       .insert([
@@ -83,8 +71,8 @@ app.post('/api/tasks', verifyAdminPin, upload.single('file'), async (req, res) =
           title,
           course,
           description,
-          file_url: urlData.publicUrl,
-          file_path: fileName
+          file_url,
+          file_path
         }
       ])
       .select();
