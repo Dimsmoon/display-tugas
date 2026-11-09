@@ -473,9 +473,11 @@ if (fileInput) {
     const selectedFile = e.target.files[0];
 
     if (selectedFile) {
-      const MAX_SIZE = 4 * 1024 * 1024;
+      // UBAH BATAS INI MENJADI LEBIH BESAR (Misal: 50 MB untuk menampung file ZIP besar)
+      const MAX_SIZE = 50 * 1024 * 1024; // 50 MB dalam bytes
+      
       if (selectedFile.size > MAX_SIZE) {
-        showWarning('Ukuran file terlalu besar! Maksimal ukuran file adalah 4 MB.');
+        showWarning('Ukuran file terlalu besar! Maksimal ukuran file adalah 50 MB.');
         fileInput.value = '';
         resetDropzoneUI();
         return;
